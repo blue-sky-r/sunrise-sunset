@@ -76,9 +76,11 @@ def suncalc(doy, lat, lon):
 
 
 # test for Banska Bystrica
-# google: GMT/UTC 5:38 AM 7:41 PM
+# https://www.timeanddate.com/sun/@12057205
+# 04/05/2020 sunrise 5:18, sunset 20:03 GMT+2
+# 04/05/2020 'rise_hm': '05h 18m', 'set_hm': '20h 02m'
 bb_lat = 48.736277; bb_lon = 19.1461917
-d, y = 3, 2020
+d, y = 4, 2020
 for m in range(1,13):
     print "%02d/%02d/%04d" % (d,m,y), suncalc(day_of_year(d, m, y), bb_lat, bb_lon)
 
