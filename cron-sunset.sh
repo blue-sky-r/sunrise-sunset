@@ -1,4 +1,4 @@
-:
+#!/bin/ash
 
 # sunset script - trigger action at sunset + offset
 #
@@ -8,9 +8,9 @@
 #
 # USAGE: cron-sunset.sh [action pars]
 #
-# intended to be called from cron
-# it sleeps till $OFS minutes before sunset
-# and then executes the $ACTION
+# intended to be called from cron on OpenWRT
+# it sleeps till $OFS minutes before sunset and
+# then executes the $ACTION (default relay.cgi on)
 #
 # https://github.com/blue-sky-r/sunrise-sunset
 
@@ -30,7 +30,6 @@ TAG=sunset
 # executables dir
 #
 DIR="/www/cgi-bin"
-#DIR=$( pwd )
 
 # action (default 'relay.cgi on')
 #
@@ -42,7 +41,7 @@ $DIR/sunrise-sunset.awk -- $LAT $LON sunset $OFS sleep
 
 # optional syslog msg
 #
-[ -n "$TAG" ] && logger -t "$TAG" "ACTION - $ACTION"
+[ -n "$TAG" ] && logger -t "$TAG" "${OFS}m = ACTION: $ACTION"
 
 # execute action
 #
