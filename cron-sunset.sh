@@ -41,7 +41,7 @@ $DIR/sunrise-sunset.awk -- $LAT $LON sunset $OFS sleep
 
 # optional syslog msg
 #
-[ -n "$TAG" ] && logger -t "$TAG" "${OFS}m = ACTION: $ACTION"
+[ -n "$TAG" ] && logger -t "$TAG" -- "${OFS}m = ACTION: $ACTION"
 
 # execute action
 #
