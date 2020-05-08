@@ -1,12 +1,12 @@
-## sunrise - sunset calculator
+# sunrise - sunset calculator
 
 These scripts can calculate sunrise + sunset time for specific location and date.
 
-### motivation
+## motivation
 
 Activate a staircase LED light just before sunset to save the energy, but make sure the staircase
 is well lit for safety reasons. The staircase LED bars are controlled by WiFi Smart Socket
-[ Kankun / Konke ](https://openwrt.org/toh/kankun/kk-sp3) running OpenRWT. So any similar smart-plug 
+[ [ Kankun / Konke ](https://openwrt.org/toh/kankun/kk-sp3) ] running OpenRWT. So any similar smart-plug 
 device based on OpenWRT should work ...
 
     BusyBox v1.19.4 (2014-03-27 17:39:06 CST) built-in shell (ash)
@@ -27,14 +27,14 @@ device based on OpenWRT should work ...
       * fae@konke.com            their respective owners.
      -----------------------------------------------------
 
+![Smart WiFi Socket Konke](/images/konke-sp3.jpg)
 
-
-### possible solutions
+## possible solutions
 
 Simplified overview of possible ways to approach the problem with pros and cons:
 
 * online services (sunrise/sunset calculators)
-  -pros:
+  - pros:
     - very easy implementation
   - cons:
     - does not work off-line
@@ -57,17 +57,17 @@ Simplified overview of possible ways to approach the problem with pros and cons:
   - cons:
     - not easy implementation
   
-* dawn switch:
+* dark/dusk sensitive input:
   - pros:
     - location independent
     - can handle also special cases like sun eclipse, heavy clouds during the day
   - cons:
-    - requires hw modification (add photosensitive element LDR)
-    - requires fw extension (OpenWRT package)
+    - requires hw modification (add photosensitive LDR element)
+    - requires fw extension (OpenWRT package to setup sensitivity etc)
     
-Here is the implementation of  "real-time sunsrise/sunset calculator"
+This is the implementation of  "real-time sunrise/sunset calculator"
  
-### implementation
+## implementation
  
 Implementation is based on R code [sun.info.R](https://rdrr.io/cran/HelpersMG/src/R/sun.info.R).
 This R implementation looks very precise (within a few minutes) while complexity of the code is not high.
@@ -85,7 +85,8 @@ The repository contains following scripts:
 
 #### sunrise-sunset.awk
 
-Usage help is shown when executed with less than four parameters:
+There are four mandatory parametres: latitude, longitude, mode (sunrise/sunset) and offset. 
+Executing with less than four parameters shows this usage help:
 
     = calculate sunset/sunrise time for location and date = awk script for OpenWRT = ver 2020.05.01 =
 
@@ -105,9 +106,7 @@ Usage help is shown when executed with less than four parameters:
     
     multiple parts can be requested to return, e.g:  -- lat long sunset offset 'dec hms systime sleep'
 
-The mandatory parametres are: latitude, longitude, mode (sunrise/sunset) and offset. 
-
-#### cron-sunset.sh
+#### cron-sunset.sh 
 
 Intended to be called directly from cron. It is just simple wrapper for sunrise-sunset.awk providing parameters and logging.
 The wrapper is executed by cron at the scheduled time. Then it sleeps until sunset - offset time.
@@ -120,7 +119,7 @@ That means the light will switch on no sooner than 17:00 or at sunset - offset t
 
 Possible future extensions:
 - optional location autodetect by ip geolocation
-- additional LDR (dawn switch) option
+- additional LDR (dark/dusk sensitivity) option
 
 
 
