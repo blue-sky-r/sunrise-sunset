@@ -27,7 +27,7 @@ device based on OpenWRT should work ...
       * fae@konke.com            their respective owners.
      -----------------------------------------------------
 
-![Smart WiFi Socket Konke](/images/konke-sp3.jpg)
+![Smart WiFi Socket Kankun/Konke](/images/konke-sp3.jpg)
 
 ## possible solutions
 
@@ -69,7 +69,7 @@ This is the implementation of  "real-time sunrise/sunset calculator"
  
 ## implementation
  
-Implementation is based on R code [sun.info.R](https://rdrr.io/cran/HelpersMG/src/R/sun.info.R).
+Implementation is based on R code [ [sun.info.R](https://rdrr.io/cran/HelpersMG/src/R/sun.info.R) ].
 This R implementation looks very precise (within a few minutes) while complexity of the code is not high.
 Even the comments and variable names are matching as close as possible the R-code for easy refenrence.
 
@@ -83,9 +83,20 @@ The repository contains following scripts:
 
 * [cron-sunset.sh](/cron-sunset.sh) ... cron wrapper for OpenWRT
 
+#### sunrise-sunset.py
+
+Python implementation - just PoC as python in not included in OpenWRT [ [ Kankun / Konke ](https://openwrt.org/toh/kankun/kk-sp3) ] 
+customized firmware.
+
 #### sunrise-sunset.awk
 
-There are four mandatory parametres: latitude, longitude, mode (sunrise/sunset) and offset. 
+AWK impelementation - suits pefectly for OpenWRT [ [ Kankun / Konke ](https://openwrt.org/toh/kankun/kk-sp3) ] customized 
+firmware as awk is build in. A few math/system functions have to defined explicitly as they are not part of awk, like 
+ABS=VALUE, ARCUS-COSINE, convert DEGREE-to-RADIANS and SLEEP. The rest is just command line parameter handling, verbose
+output and some conversions for human friendly format. 
+
+There are four mandatory cli parametres: latitude, longitude, mode (sunrise/sunset) and offset. 
+
 Executing with less than four parameters shows this usage help:
 
     = calculate sunset/sunrise time for location and date = awk script for OpenWRT = ver 2020.05.01 =
@@ -111,13 +122,13 @@ Executing with less than four parameters shows this usage help:
 Intended to be called directly from cron. It is just simple wrapper for sunrise-sunset.awk providing parameters and logging.
 The wrapper is executed by cron at the scheduled time. Then it sleeps until sunset - offset time.
 When sleep is over configurable action is executed (switch on the lights). If execution (cron) time t is after
-the sunset then action is executed immediatly. So for example the cron is executing wrapper cron-sunset.sh at 17:00.
-That means the light will switch on no sooner than 17:00 or at sunset - offset time.
+the sunset then action is executed immediately. So for example the cron is executing wrapper cron-sunset.sh at 17:00.
+That means the light will switch on no sooner than 17:00 or at sunset - offset time. The offset is for fine-tune adjustment.
+Optional action logging logs via standard logger. The script accepts action paameters (default to "relay.cgi on").
 
+### To do
 
-#### to do
-
-Possible future extensions:
+Possible future improvements and extensions:
 - optional location autodetect by ip geolocation
 - additional LDR (dark/dusk sensitivity) option
 
