@@ -71,7 +71,7 @@ This is the implementation of  "real-time sunrise/sunset calculator"
  
 Implementation is based on R code [ [sun.info.R](https://rdrr.io/cran/HelpersMG/src/R/sun.info.R) ].
 This R implementation looks very precise (within a few minutes) while complexity of the code is not high.
-Even the comments and variable names are matching as close as possible the R-code for easy refenrence.
+Even the comments and variable names are matching as close as possible the R-code for easy cross-references.
 
 ### scripts
 
@@ -83,6 +83,8 @@ The repository contains following scripts:
 
 * [cron-sunset.sh](/cron-sunset.sh) ... cron wrapper for OpenWRT
 
+* [relay.cgi](/relay.cgi) ... cgi/cli scripy to control Smart Socket relay
+
 #### sunrise-sunset.py
 
 Python implementation - just PoC as python in not included in OpenWRT [ [ Kankun / Konke ](https://openwrt.org/toh/kankun/kk-sp3) ] 
@@ -92,7 +94,7 @@ customized firmware.
 
 AWK impelementation - suits pefectly for OpenWRT [ [ Kankun / Konke ](https://openwrt.org/toh/kankun/kk-sp3) ] customized 
 firmware as awk is build in. A few math/system functions have to defined explicitly as they are not part of awk, like 
-ABS=VALUE, ARCUS-COSINE, convert DEGREE-to-RADIANS and SLEEP. The rest is just command line parameter handling, verbose
+absolute-value, arcus-cosine, convert degree-to-radians and sleep. The rest is just command line parameter handling, verbose
 output and some conversions for human friendly format. 
 
 There are four mandatory cli parametres: latitude, longitude, mode (sunrise/sunset) and offset. 
@@ -117,6 +119,10 @@ Executing with less than four parameters shows this usage help:
     
     multiple parts can be requested to return, e.g:  -- lat long sunset offset 'dec hms systime sleep'
 
+The basic usage scenario is either:
+* to schedule the job to run at time calculated by sunrise-sunset.awk
+* to let the sunrise-sunset.awk sleep and execute the job after the sunrise-sunset.awk call
+
 #### cron-sunset.sh 
 
 Intended to be called directly from cron. It is just simple wrapper for sunrise-sunset.awk providing parameters and logging.
@@ -125,6 +131,36 @@ When sleep is over configurable action is executed (switch on the lights). If ex
 the sunset then action is executed immediately. So for example the cron is executing wrapper cron-sunset.sh at 17:00.
 That means the light will switch on no sooner than 17:00 or at sunset - offset time. The offset is for fine-tune adjustment.
 Optional action logging logs via standard logger. The script accepts action paameters (default to "relay.cgi on").
+
+#### relay.cgi
+
+Simple script to control [ [ Kankun / Konke ](https://openwrt.org/toh/kankun/kk-sp3) ] relay. Can ba called either from command
+line (cron job) or via http cgi extension.
+
+Accepted parameters are:
+
+* toggle ... just toggle the current state of relay (off -> on, on -> off)
+* on ... activate relay
+* off ... deactivate relay
+* status ... return status (either on or off)
+* anything else (even no parameters) is handled as "status" request 
+
+Command line (CLI) parameters examples: 
+
+    # /www/cgi-bin/relay.cgi on
+    Content-Type: text/plain
+
+    ON
+    # /www/cgi-bin/relay.cgi status
+    Content-Type: text/plain
+
+    RELAY is ON
+    
+http request (CGI) parameters:
+
+    http://device/cgi-bin/relay.cgi&on
+    
+    http://device/cgi-bin/relay.cgi&status
 
 ### To do
 
