@@ -12,7 +12,7 @@
 
 function usage()
 {
-    print "= calculate sunset/sunrise time for location and date = awk script for OpenWRT = ver 2020.05.01 ="
+    print "= calculate sunset/sunrise time for location and date = awk script for OpenWRT = ver 2021.01.07 ="
     print
     printf "usage: %s [-v v=1] -- latitude longitude [sun]set|[sun]rise offset [dec|hms|systime|sleep] [yyyy-mm-dd]", ENVIRON["_"]
     print
@@ -87,6 +87,18 @@ function sleep(sec)
     if (sec > 0) system(sprintf("sleep %d", sec))
 }
 
+# local timezone offset as decimal hours (+0130 -> 1.5)
+#
+function tz_hdec(ts)
+{
+    # get local timezone offset e.g. +0100
+    ofs = strftime("%z", ts)
+    # HHMM to decimal
+    num = substr(ofs, 2, 2) + substr(ofs, 4) / 60
+    # adjust sign
+    return substr(ofs, 1, 1) == "+" ?  num : -num
+}
+
 # sun-set/rise calculation for day-of-year, lattitude, longitude
 #
 function suncalc(doy, lat, lon, rise)
@@ -124,9 +136,10 @@ function suncalc(doy, lat, lon, rise)
     n = 720 - 10 * sin(4 * pi * (doy - 80.0) / 365.25) + 8 * sin(2 * pi * doy / 365.25)
 
     # timezone offset relative to utc/gmt
-    tz = int(((7.5 + lon) % 360) / 15)
+    #tz = int(((7.5 + lon) % 360) / 15)
     # if over 12 use negative offset
-    if (tz > 12) tz = 12 - tz
+    #if (tz > 12) tz = 12 - tz
+    tz = 0
 
     ## now sunrise and sunset are:
     sunrise = (n - that + timezone) / 60.0 + tz
@@ -168,15 +181,17 @@ BEGIN {
     verbose("INPUT - latitude[dec]:" lat ", longitude[dec]:" lon ", sunset/rise[sr]:" sr ", offset[min]:" ofs ", return:[ " ret " ]")
     verbose("DATETIME - timestamp:" ts ", datetime[Y-m-d H:M:S]:" strftime("%F %T", ts, 1) ", day-of-year:" doy)
 
+    # decimal imezone offset
+    zone = tz_hdec(ts)
     # decimal hour
-    h = suncalc(doy, lat, lon, match(sr, /rise/)) + ofs / 60
+    h = suncalc(doy, lat, lon, match(sr, /rise/)) + ofs / 60 - zone
     # h as timestamp
     tsh = mktime(strftime("%Y %m %d 00 00 00",ts,1)) + int(3600 * h)
     # calc nap length in sec
     nap = tsh - ts
 
     # verbose/debug
-    verbose("RESULT - hours[decimal]:" h ", hours[hms]:" s2hms(3600 * h) ", timestamp:" tsh ", nap[sec]:" nap ", nap[hms]:" s2hms(nap))
+    verbose("RESULT - zone[decimal]:" zone ", hours[decimal]:" h ", hours[hms]:" s2hms(3600 * h) ", timestamp:" tsh ", nap[sec]:" nap ", nap[hms]:" s2hms(nap))
 
     # return requested parts
     if (index(ret, "dec"))      print h
