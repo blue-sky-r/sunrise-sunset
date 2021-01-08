@@ -12,7 +12,7 @@
 
 function usage()
 {
-    print "= calculate sunset/sunrise time for location and date = awk script for OpenWRT = ver 2021.01.08 ="
+    print "= calculate sunset/sunrise time for location and date = awk script for OpenWRT = ver 2021.01.09 ="
     print
     printf "usage: %s [-v v=1] -- latitude longitude [sun]set|[sun]rise offset [dec|hms|systime|sleep] [yyyy-mm-dd]", ENVIRON["_"]
     print
@@ -87,16 +87,26 @@ function sleep(sec)
     if (sec > 0) system(sprintf("sleep %d", sec))
 }
 
-# local timezone offset as decimal hours (+0130 -> 1.5)
+# sHHMM -> decimal (+0130 -> 1.5)
 #
-function tz_hdec(ts)
+function shhmm_dec(shhmm)
 {
-    # get local timezone offset e.g. +0100
-    ofs = strftime("%z", ts, 0)
-    # +HHMM to decimal
-    num = substr(ofs, 2, 2) + substr(ofs, 4) / 60
+    # abs +HHMM to decimal
+    anum = substr(shhmm, 2, 2) + substr(shhmm, 4) / 60
     # adjust sign
-    return substr(ofs, 1, 1) == "+" ?  num : -num
+    return substr(shhmm, 1, 1) == "+" ?  anum : -anum
+}
+
+# local DST (daylight saving time) offset as decimal hours (+0130 -> 1.5)
+#
+function dst_hdec(ts)
+{
+    # get local timezone offset for Jan 1, 2000 e.g. +0100
+    zofs1jan = strftime("%z", mktime("2000 01 01 0 0 0"), 0)
+    # get local timezone offset for timestamp ts e.g. +0100
+    zofs = strftime("%z", ts, 0)
+    # calc dst fix
+    return zofs == zofs1jan ?  0 : shhmm_dec(zofs) - shhmm_dec(zofs1jan)
 }
 
 # sun-set/rise calculation for day-of-year, lattitude, longitude
@@ -159,7 +169,7 @@ BEGIN {
 
     # sun-set sun-rise
     sr  = ARGV[3]
-rigger action at sunset + offset
+
     # offset [min]
     ofs = ARGV[4]
 
@@ -173,19 +183,24 @@ rigger action at sunset + offset
 
     # verbose/debug
     verbose("INPUT - latitude[dec]:" lat ", longitude[dec]:" lon ", sunset/rise[sr]:" sr ", offset[min]:" ofs ", return:[ " ret " ]")
-    verbose("DATETIME - timestamp:" ts ", datetime[Y-m-d H:M:S]:" strftime("%F %T", ts, 1) ", day-of-year:" doy)
 
-    # decimal timezone/dst offset
-    tzdst = tz_hdec(ts)
-    # decimal hour with tz/dst adjustment
-    h = suncalc(doy, lat, lon, match(sr, /rise/)) + ofs / 60 - tzdst
+    # dst fix
+    dst = dst_hdec(ts)
+    verbose("DATETIME - timestamp:" ts ", datetime[Y-m-d H:M:S]:" strftime("%F %T", ts, 1) ", day-of-year:" doy " dst[h.dec]:" dst)
+
+    # calculated decimal hour
+    hcalc = suncalc(doy, lat, lon, match(sr, /rise/))
+    # calculated value with dst fix and optional offset
+    h = hcalc + dst + ofs / 60
+    # verbose/debug
+    verbose("RESULT - " sr " = calc[dec]:" hcalc " + dst[dec]:" dst " + offset[min]:" ofs " = hours[dec]:" h ", hours[hms]:" s2hms(3600 * h))
+
     # h as timestamp
-    tsh = mktime(strftime("%Y %m %d 00 00 00",ts,1)) + int(3600 * h)
+    tsh = mktime(strftime("%Y %m %d 00 00 00", ts, 1)) + int(3600 * h)
     # calc nap length in sec
     nap = tsh - ts
-
     # verbose/debug
-    verbose("RESULT - zone/dst[dec]:" tzdst ", hours[dec]:" h ", hours[hms]:" s2hms(3600 * h) ", timestamp:" tsh ", nap[sec]:" nap ", nap[hms]:" s2hms(nap))
+    verbose("SLEEP  - adjusted " sr " = hours[dec]:" h ", timestamp:" tsh ", nap.time[sec]:" nap ", nap.time[hms]:" s2hms(nap))
 
     # return requested parts
     if (index(ret, "dec"))      print h
